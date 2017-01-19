@@ -29,9 +29,9 @@ import android.view.View;
 import android.view.ViewParent;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static android.os.Build.VERSION.SDK_INT;
 
@@ -74,8 +74,8 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
 
   // It requires client to detach Activity/unregister View to prevent Memory leak
   // Use RecyclerView#hashCode() to sync between maps
-  final Map<Integer, RecyclerView> mViews = new ConcurrentHashMap<>();
-  final Map<Integer, ToroScrollListener> mListeners = new ConcurrentHashMap<>();
+  final Map<Integer, RecyclerView> mViews = new LinkedHashMap<>();
+  final Map<Integer, ToroScrollListener> mListeners = new LinkedHashMap<>();
 
   // !IMPORTANT: I limit this Map capacity to 3
   private StateLinkedList mStates;
@@ -198,13 +198,16 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
     if (state.player != null) {
       // Cold start MediaPlayerManager from a saved state
       playerManager.setPlayer(state.player);
-      playerManager.saveVideoState(state.player.getMediaId(),
-          playerManager.getSavedPosition(state.player.getMediaId()), state.player.getDuration());
+      playerManager.saveVideoState(state.player.getMediaId(), state.position,
+          state.player.getDuration());
 
-      if (!state.player.isPlaying() && state.player.wantsToPlay() && Toro.getStrategy()
-          .allowsToPlay(state.player, view)) {
-        playerManager.restoreVideoState(state.player.getMediaId());
-        playerManager.startPlayback();
+      if (state.player.wantsToPlay() && Toro.getStrategy().allowsToPlay(state.player, view)) {
+        if (!state.player.isPrepared()) {
+          state.player.preparePlayer(false);
+        } else if (!state.player.isPlaying()) {
+          playerManager.restoreVideoState(state.player.getMediaId());
+          playerManager.startPlayback();
+        }
       }
     }
 
@@ -512,6 +515,7 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
     // 1. Check if current manager wrapped this player
     if (player.equals(manager.getPlayer())) {
       if (player.wantsToPlay() && Toro.getStrategy().allowsToPlay(player, parent)) {
+        // player.isPlaying() is always false here
         manager.restoreVideoState(player.getMediaId());
         manager.startPlayback();
       }
@@ -521,6 +525,7 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
         // ... if it's possible
         if (player.wantsToPlay() && Toro.getStrategy().allowsToPlay(player, parent)) {
           manager.setPlayer(player);
+          // player.isPrepared() is always false here
           manager.restoreVideoState(player.getMediaId());
           manager.startPlayback();
         }

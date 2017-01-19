@@ -45,7 +45,7 @@ public class FirstItemViewHolder extends ExoVideoViewHolder {
 
   private TimelineItem.VideoItem videoItem;
 
-  @Override public void bind(RecyclerView.Adapter adapter, @Nullable Object object) {
+  @Override protected void bindInternal(RecyclerView.Adapter adapter, @Nullable Object object) {
     if (!(object instanceof TimelineItem.VideoItem)) {
       throw new IllegalArgumentException("Illegal object: " + object);
     }

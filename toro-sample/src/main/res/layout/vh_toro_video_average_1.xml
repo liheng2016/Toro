@@ -44,6 +44,13 @@ android:descendantFocusability="blocksDescendants" is added to pass click event 
   <!--android:layout_gravity="center"-->
   <!--/>-->
 
+  <ImageView
+      android:id="@+id/art_work"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:scaleType="centerCrop"
+      />
+
   <TextView
       android:id="@+id/state"
       android:layout_width="wrap_content"

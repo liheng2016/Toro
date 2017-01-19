@@ -40,7 +40,7 @@ public class Basic1VideoViewHolder extends ExoVideoViewHolder {
     super(itemView);
   }
 
-  @Override public void bind(RecyclerView.Adapter adapter, Object item) {
+  @Override protected void bindInternal(RecyclerView.Adapter adapter, Object item) {
     if (!(item instanceof SimpleVideoObject)) {
       throw new IllegalArgumentException("Invalid Object: " + item);
     }
@@ -55,5 +55,10 @@ public class Basic1VideoViewHolder extends ExoVideoViewHolder {
 
   @Nullable @Override public String getMediaId() {
     return this.videoItem != null ? this.videoItem.video + "@" + getAdapterPosition() : null;
+  }
+
+  @Override protected void onRecycled() {
+    super.onRecycled();
+    this.videoView.releasePlayer();
   }
 }

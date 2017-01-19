@@ -31,7 +31,7 @@ import im.ene.toro.exoplayer2.ExoVideoView;
 public abstract class ExtVideoViewHolder extends ToroAdapter.ViewHolder implements ExtToroPlayer {
 
   @NonNull protected final ExoVideoView videoView;
-  protected final ExtPlayerViewHelper helper;
+  protected final ExtVideoViewHelper helper;
   private boolean mPlayable = true; // normally true
 
   public ExtVideoViewHolder(View itemView) {
@@ -40,7 +40,7 @@ public abstract class ExtVideoViewHolder extends ToroAdapter.ViewHolder implemen
     if (videoView == null) {
       throw new NullPointerException("A valid DemoVideoView is required.");
     }
-    helper = new ExtPlayerViewHelper(this, itemView);
+    helper = new ExtVideoViewHelper(this, itemView);
     videoView.setPlayerCallback(helper);
   }
 

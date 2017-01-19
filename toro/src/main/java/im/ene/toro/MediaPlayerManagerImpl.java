@@ -44,11 +44,7 @@ public final class MediaPlayerManagerImpl implements MediaPlayerManager {
   @Override public void startPlayback() {
     // Should prepare video if need?
     if (mPlayer != null) {
-      if (!mPlayer.isPrepared()) {
-        mPlayer.preparePlayer(false);
-      } else {
-        mPlayer.start();
-      }
+      mPlayer.start();
     }
   }
 

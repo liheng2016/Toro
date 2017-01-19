@@ -23,13 +23,13 @@ import android.view.ViewParent;
 import im.ene.toro.Toro;
 import im.ene.toro.ToroPlayer;
 import im.ene.toro.MediaPlayerManager;
-import im.ene.toro.exoplayer2.ExoPlayerViewHelper;
+import im.ene.toro.exoplayer2.ExoVideoViewHelper;
 
 /**
  * Created by eneim on 10/4/16.
  */
 
-public class LongClickableViewHelper extends ExoPlayerViewHelper implements OnLongClickListener {
+public class LongClickableViewHelper extends ExoVideoViewHelper implements OnLongClickListener {
 
   public LongClickableViewHelper(@NonNull ToroPlayer player, @NonNull View itemView) {
     super(player, itemView);
@@ -65,8 +65,12 @@ public class LongClickableViewHelper extends ExoPlayerViewHelper implements OnLo
 
       // Trigger new player
       manager.setPlayer(player);
-      manager.restoreVideoState(player.getMediaId());
-      manager.startPlayback();
+      if (!player.isPrepared()) {
+        player.preparePlayer(false);
+      } else {
+        manager.restoreVideoState(player.getMediaId());
+        manager.startPlayback();
+      }
       return true;
     } else {
       // Pressing current player, pause it if it is playing
@@ -76,8 +80,12 @@ public class LongClickableViewHelper extends ExoPlayerViewHelper implements OnLo
         manager.pausePlayback();
       } else {
         // It's paused, so we resume it
-        manager.restoreVideoState(currentPlayer.getMediaId());
-        manager.startPlayback();
+        if (!currentPlayer.isPrepared()) {
+          currentPlayer.preparePlayer(false);
+        } else {
+          manager.restoreVideoState(currentPlayer.getMediaId());
+          manager.startPlayback();
+        }
       }
       return true;
     }

@@ -22,6 +22,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.VideoView;
 import im.ene.toro.sample.R;
@@ -43,24 +44,28 @@ public class Average1VideoViewHolder extends ExoVideoViewHolder {
   public static final int LAYOUT_RES = R.layout.vh_toro_video_average_1;
 
   private SimpleVideoObject video;
-  private final TextView stateView;
+  TextView stateView;
+  ImageView artWork;
 
   public Average1VideoViewHolder(View itemView) {
     super(itemView);
     stateView = (TextView) itemView.findViewById(R.id.state);
+    artWork = (ImageView) itemView.findViewById(R.id.art_work);
   }
 
   @Override protected ExoVideoView findVideoView(View itemView) {
     return (ExoVideoView) itemView.findViewById(R.id.video);
   }
 
-  @Override public void bind(RecyclerView.Adapter adapter, Object item) {
+  @Override protected void bindInternal(RecyclerView.Adapter adapter, Object item) {
     if (!(item instanceof SimpleVideoObject)) {
       throw new IllegalArgumentException("Invalid Object: " + item);
     }
 
     this.video = (SimpleVideoObject) item;
     this.videoView.setMedia(Uri.parse(this.video.video));
+    artWork.setVisibility(View.VISIBLE);
+    artWork.setImageResource(R.drawable.toro_place_holder);
   }
 
   // MEMO: Unique or null
@@ -82,6 +87,7 @@ public class Average1VideoViewHolder extends ExoVideoViewHolder {
   }
 
   @Override public void onPlaybackStarted() {
+    // artWork.setVisibility(View.GONE);
     stateView.setText("Started");
   }
 
@@ -99,4 +105,13 @@ public class Average1VideoViewHolder extends ExoVideoViewHolder {
     return super.onPlaybackError(error);
   }
 
+  @Override protected void onRecycled() {
+    super.onRecycled();
+    stateView.setText("Idled");
+  }
+
+  @Override public void start() {
+    artWork.setVisibility(View.GONE);
+    super.start();
+  }
 }

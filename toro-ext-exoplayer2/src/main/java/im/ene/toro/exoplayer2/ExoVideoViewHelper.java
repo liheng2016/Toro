@@ -30,10 +30,10 @@ import im.ene.toro.ToroPlayer;
  * this, but in case it wants to provide custom behaviors, it is recommended to call super method
  * from this Helper.
  */
-public class ExoPlayerViewHelper extends PlayerViewHelper implements PlayerCallback {
+public class ExoVideoViewHelper extends PlayerViewHelper implements PlayerCallback {
 
   // Require the player Object and the View holds it.
-  public ExoPlayerViewHelper(@NonNull ToroPlayer player, @NonNull View itemView) {
+  public ExoVideoViewHelper(@NonNull ToroPlayer player, @NonNull View itemView) {
     super(player, itemView);
   }
 

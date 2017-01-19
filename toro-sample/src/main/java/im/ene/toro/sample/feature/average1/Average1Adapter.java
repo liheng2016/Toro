@@ -58,7 +58,8 @@ public class Average1Adapter extends ToroAdapter<ToroAdapter.ViewHolder> {
   }
 
   @Override public int getItemViewType(int position) {
-    return position % 3 == 1 ? Average1ViewHolder.TYPE_VIDEO : Average1ViewHolder.TYPE_NORMAL;
+    return getItem(position) instanceof SimpleVideoObject ? Average1ViewHolder.TYPE_VIDEO
+        : Average1ViewHolder.TYPE_NORMAL;
   }
 
   @Override public int getItemCount() {
