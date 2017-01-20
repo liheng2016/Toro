@@ -47,7 +47,7 @@ public class FacebookTimelineActivity extends BaseActivity
     implements FacebookPlaylistFragment.Callback {
 
   @Bind(R.id.recycler_view) RecyclerView mRecyclerView;
-  private TimelineAdapter adapter;
+  TimelineAdapter adapter;
   private RecyclerView.LayoutManager layoutManager;
 
   @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -107,6 +107,7 @@ public class FacebookTimelineActivity extends BaseActivity
         ToroPlayer player = adapter.getPlayer();
         if (player != null) {
           duration = player.getDuration();
+          //noinspection ConstantConditions
           position = player.isPlaying() ? player.getCurrentPosition()
               : adapter.getSavedPosition(Util.genVideoId(item.getVideoUrl(), order)); // safe
         }
