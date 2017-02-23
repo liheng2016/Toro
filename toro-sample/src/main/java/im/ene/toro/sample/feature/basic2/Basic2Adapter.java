@@ -20,6 +20,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import im.ene.toro.BaseAdapter;
+import im.ene.toro.OrderedPlayback;
 import im.ene.toro.ToroAdapter;
 import im.ene.toro.sample.data.SimpleObject;
 import im.ene.toro.sample.data.SimpleVideoObject;
@@ -27,11 +28,10 @@ import im.ene.toro.sample.data.SimpleVideoObject;
 /**
  * Created by eneim on 6/29/16.
  */
-public class Basic2Adapter extends BaseAdapter<ToroAdapter.ViewHolder> implements OrderedVideoList {
+public class Basic2Adapter extends BaseAdapter<ToroAdapter.ViewHolder> implements OrderedPlayback {
 
   public Basic2Adapter() {
     super();
-    setHasStableIds(true);  // MUST have this.
   }
 
   @Override public ToroAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -71,13 +71,7 @@ public class Basic2Adapter extends BaseAdapter<ToroAdapter.ViewHolder> implement
     return position;
   }
 
-  /**
-   * See {@link OrderedVideoList#getFirstVideoPosition()}
-   *
-   * @return Position of the Video on top, or the Video user prefer to be played first.
-   */
-  @Override public int getFirstVideoPosition() {
-    return 0; // In this sample, Videos are at position 0, 1, 3, 4 ...
-    // HINT: Change this to 1 to see the Video number 1 be played first, instead of number 0.
+  @Override public int getFirstPlayableAdapterPosition() {
+    return 0;
   }
 }

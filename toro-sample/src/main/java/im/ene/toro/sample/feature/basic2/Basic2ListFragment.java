@@ -27,13 +27,11 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
+import im.ene.toro.OrderedPlaybackStrategy;
 import im.ene.toro.Toro;
-import im.ene.toro.ToroPlayer;
 import im.ene.toro.ToroStrategy;
 import im.ene.toro.sample.BaseToroFragment;
 import im.ene.toro.sample.R;
-import java.util.List;
 
 /**
  * Created by eneim on 6/30/16.
@@ -48,7 +46,7 @@ import java.util.List;
 public class Basic2ListFragment extends BaseToroFragment {
 
   protected RecyclerView mRecyclerView;
-  protected RecyclerView.Adapter mAdapter;
+  protected Basic2Adapter mAdapter;
 
   public static Basic2ListFragment newInstance() {
     return new Basic2ListFragment();
@@ -62,28 +60,6 @@ public class Basic2ListFragment extends BaseToroFragment {
   @Override public void onAttach(Context context) {
     super.onAttach(context);
     strategyToRestore = Toro.getStrategy();
-    Toro.setStrategy(new ToroStrategy() {
-      boolean isFirstVideoObserved = false;
-
-      @Override public String getDescription() {
-        return "First video plays first";
-      }
-
-      @Override public ToroPlayer findBestPlayer(List<ToroPlayer> candidates) {
-        return strategyToRestore.findBestPlayer(candidates);
-      }
-
-      @Override public boolean allowsToPlay(ToroPlayer player, ViewParent parent) {
-        boolean allowToPlay =
-            (isFirstVideoObserved || player.getPlayOrder() == firstVideoPosition)  //
-                && strategyToRestore.allowsToPlay(player, parent);
-        // Keep track of first video on top.
-        if (player.getPlayOrder() == firstVideoPosition) {
-          isFirstVideoObserved = true;
-        }
-        return allowToPlay;
-      }
-    });
   }
 
   @Override public void onDetach() {
@@ -108,11 +84,9 @@ public class Basic2ListFragment extends BaseToroFragment {
           ((LinearLayoutManager) layoutManager).getOrientation()));
     }
 
-    mAdapter = getAdapter();
+    mAdapter = new Basic2Adapter();
     // Do the magic.
-    if (mAdapter instanceof OrderedVideoList) {
-      firstVideoPosition = ((OrderedVideoList) mAdapter).getFirstVideoPosition();
-    }
+    Toro.setStrategy(new OrderedPlaybackStrategy(mAdapter, strategyToRestore));
 
     mRecyclerView.setHasFixedSize(false);
     mRecyclerView.setAdapter(mAdapter);
@@ -143,9 +117,5 @@ public class Basic2ListFragment extends BaseToroFragment {
 
   RecyclerView.LayoutManager getLayoutManager() {
     return new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
-  }
-
-  RecyclerView.Adapter getAdapter() {
-    return new Basic2Adapter();
   }
 }

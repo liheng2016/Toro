@@ -32,13 +32,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import com.google.android.exoplayer2.C;
+import im.ene.toro.OrderedPlaybackStrategy;
 import im.ene.toro.PlaybackState;
 import im.ene.toro.Toro;
-import im.ene.toro.ToroPlayer;
 import im.ene.toro.ToroStrategy;
 import im.ene.toro.extended.SnapToTopLinearLayoutManager;
 import im.ene.toro.sample.R;
@@ -92,29 +91,6 @@ public class FacebookPlaylistFragment extends DialogFragment {
     super.onCreate(savedInstanceState);
     strategyToRestore = Toro.getStrategy();
 
-    Toro.setStrategy(new ToroStrategy() {
-      boolean isFirstPlayerDone = false;
-
-      @Override public String getDescription() {
-        return "First video plays first";
-      }
-
-      @Override public ToroPlayer findBestPlayer(List<ToroPlayer> candidates) {
-        return strategyToRestore.findBestPlayer(candidates);
-      }
-
-      @Override public boolean allowsToPlay(ToroPlayer player, ViewParent parent) {
-        boolean allowToPlay = (isFirstPlayerDone || player.getPlayOrder() == 0)  //
-            && strategyToRestore.allowsToPlay(player, parent);
-
-        // A work-around to keep track of first video on top.
-        if (player.getPlayOrder() == 0) {
-          isFirstPlayerDone = true;
-        }
-        return allowToPlay;
-      }
-    });
-
     if (getArguments() != null) {
       this.baseItem = getArguments().getParcelable(ARGS_BASE_VIDEO);
       this.basePosition = getArguments().getLong(ARGS_BASE_START_POSITION, C.POSITION_UNSET);
@@ -130,7 +106,7 @@ public class FacebookPlaylistFragment extends DialogFragment {
 
   @BindView(R.id.recycler_view) RecyclerView recyclerView;
   private MoreVideoRepo videoRepo;
-  private MoreVideosAdapter adapter;
+  MoreVideosAdapter adapter;
 
   @Nullable @Override
   public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
@@ -150,6 +126,8 @@ public class FacebookPlaylistFragment extends DialogFragment {
         new SnapToTopLinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
     recyclerView.setLayoutManager(layoutManager);
     recyclerView.setAdapter(adapter);
+
+    Toro.setStrategy(new OrderedPlaybackStrategy(adapter, strategyToRestore));
 
     // Maybe DI in real practice, not here.
     videoRepo = new MoreVideoRepo(baseItem);

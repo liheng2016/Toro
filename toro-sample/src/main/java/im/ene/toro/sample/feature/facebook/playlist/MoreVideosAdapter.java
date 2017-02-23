@@ -22,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import im.ene.toro.BaseAdapter;
+import im.ene.toro.OrderedPlayback;
 import im.ene.toro.ToroAdapter;
 import im.ene.toro.sample.feature.facebook.timeline.TimelineItem;
 import java.util.ArrayList;
@@ -31,7 +32,8 @@ import java.util.List;
  * Created by eneim on 10/13/16.
  */
 
-public class MoreVideosAdapter extends BaseAdapter<ToroAdapter.ViewHolder> {
+public class MoreVideosAdapter extends BaseAdapter<ToroAdapter.ViewHolder> implements
+    OrderedPlayback {
 
   static final int VIDEO_TYPE_FIRST = 0;
   static final int VIDEO_TYPE_NEXT = 1;
@@ -78,5 +80,9 @@ public class MoreVideosAdapter extends BaseAdapter<ToroAdapter.ViewHolder> {
       this.items.addAll(newItems);
       notifyItemRangeInserted(oldLen, newItems.size());
     }
+  }
+
+  @Override public int getFirstPlayableAdapterPosition() {
+    return 0;
   }
 }

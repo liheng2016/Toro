@@ -26,7 +26,9 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import im.ene.toro.OrderedPlaybackStrategy;
 import im.ene.toro.Toro;
+import im.ene.toro.ToroStrategy;
 import im.ene.toro.sample.BaseToroFragment;
 import im.ene.toro.sample.R;
 
@@ -36,7 +38,8 @@ import im.ene.toro.sample.R;
 public class Basic4ListFragment extends BaseToroFragment {
 
   protected RecyclerView recyclerView;
-  protected RecyclerView.Adapter adapter;
+  protected Basic4Adapter adapter;
+  private static final ToroStrategy strategyToRestore = Toro.getStrategy();
 
   public static Basic4ListFragment newInstance() {
     return new Basic4ListFragment();
@@ -58,15 +61,17 @@ public class Basic4ListFragment extends BaseToroFragment {
           ((LinearLayoutManager) layoutManager).getOrientation()));
     }
 
-    adapter = getAdapter();
+    adapter = new Basic4Adapter();
     recyclerView.setHasFixedSize(false);
     recyclerView.setAdapter(adapter);
 
+    Toro.setStrategy(new OrderedPlaybackStrategy(adapter, strategyToRestore));
     Toro.register(recyclerView);
   }
 
   @Override public void onDestroyView() {
     super.onDestroyView();
+    Toro.setStrategy(strategyToRestore);
     Toro.unregister(recyclerView);
   }
 
@@ -80,9 +85,5 @@ public class Basic4ListFragment extends BaseToroFragment {
 
   RecyclerView.LayoutManager getLayoutManager() {
     return new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
-  }
-
-  RecyclerView.Adapter getAdapter() {
-    return new Basic4Adapter();
   }
 }
