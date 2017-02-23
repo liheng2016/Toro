@@ -32,7 +32,6 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static android.os.Build.VERSION.SDK_INT;
 
@@ -48,8 +47,6 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
   static final String TAG = "ToroLib";
 
   public static final double DEFAULT_OFFSET = 0.75;
-
-  private static AtomicInteger attachCount = new AtomicInteger();
 
   /**
    * Stop playback strategy
@@ -72,7 +69,7 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
   static volatile Toro sInstance;
 
   // Used to swap strategies if need. It should be a strong reference.
-  private static volatile ToroStrategy cachedStrategy;
+  private static ToroStrategy cachedStrategy;
 
   // It requires client to detach Activity/unregister View to prevent Memory leak
   // Use RecyclerView#hashCode() to sync between maps
@@ -81,7 +78,7 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
   private final LinkedHashMap<PlayerManager, MediaDataObserver> observers = new LinkedHashMap<>();
 
   // Default strategy
-  private ToroStrategy mStrategy = Strategies.MOST_VISIBLE_TOP_DOWN;
+  private ToroStrategy strategy = Strategies.MOST_VISIBLE_TOP_DOWN;
 
   /**
    * Attach an activity to Toro. Toro register activity's life cycle to properly handle Screen
@@ -91,7 +88,6 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
    */
   public static void attach(@NonNull Activity activity) {
     init(activity.getApplication());
-    attachCount.incrementAndGet();
   }
 
   /**
@@ -102,15 +98,14 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
   public static void init(Application application) {
     if (sInstance == null) {
       synchronized (Toro.class) {
-        sInstance = new Toro();
+        if (sInstance == null) {
+          sInstance = new Toro();
+          application.registerActivityLifecycleCallbacks(sInstance);
+          // TODO remove on release
+          application.registerActivityLifecycleCallbacks(new LifeCycleDebugger());
+        }
       }
     }
-
-    if (attachCount.get() == 0) {
-      application.registerActivityLifecycleCallbacks(sInstance);
-    }
-
-    application.registerActivityLifecycleCallbacks(new LifeCycleDebugger());
   }
 
   /**
@@ -119,10 +114,15 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
    *
    * @param activity The host Activity where Toro will detach from.
    */
-  public static void detach(Activity activity) {
-    Application application = activity.getApplication();
-    if (application != null && attachCount.decrementAndGet() == 0) {
-      application.unregisterActivityLifecycleCallbacks(sInstance);
+  public static void detach(@NonNull Activity activity) {
+    //noinspection ConstantConditions
+    if (activity == null) {
+      throw new NullPointerException("Activity must not be null.");
+    }
+
+    if (sInstance != null) {
+      activity.getApplication().unregisterActivityLifecycleCallbacks(sInstance);
+      sInstance = null;
     }
 
     // Cleanup
@@ -132,7 +132,7 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
   }
 
   public static ToroStrategy getStrategy() {
-    return sInstance.mStrategy;
+    return sInstance.strategy;
   }
 
   /**
@@ -141,12 +141,12 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
    * @param strategy requested policy from client
    */
   public static void setStrategy(@NonNull ToroStrategy strategy) {
-    if (sInstance.mStrategy == strategy) {
+    if (sInstance.strategy == strategy) {
       // Nothing changes
       return;
     }
 
-    sInstance.mStrategy = strategy;
+    sInstance.strategy = strategy;
     dispatchStrategyChanged(strategy);
   }
 
@@ -156,8 +156,13 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
    * @param view which will be registered
    */
   public static void register(RecyclerView view) {
+    if (sInstance == null) {
+      throw new RuntimeException(
+          "Toro has not been initialized. Please call Toro#init(Application).");
+    }
+
     if (view == null) {
-      throw new NullPointerException("Registering View must not be null");
+      throw new NullPointerException("View must not be null.");
     }
 
     if (sInstance.managers.containsKey(view) && sInstance.listeners.containsKey(view)) {
@@ -184,7 +189,6 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
     // setup new scroll listener
     OnScrollListenerImpl listener = new OnScrollListenerImpl();
     view.addOnScrollListener(listener);
-    // Save to Cache
     sInstance.listeners.put(view, listener);
 
     // Done registering new View
@@ -192,9 +196,8 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
 
     // in case the Manager/Adapter has a preset Player and a saved playback state
     // (either coming back from Stopped state or a predefined one)
-    if (playerManager.getPlayer() != null
-        && playerManager.getPlaybackState(playerManager.getPlayer().getMediaId()) != null) {
-      ToroPlayer player = playerManager.getPlayer();
+    ToroPlayer player = playerManager.getPlayer();
+    if (player != null && playerManager.getPlaybackState(player.getMediaId()) != null) {
       if (player.wantsToPlay() && player.wantsToPlay() && //
           Toro.getStrategy().allowsToPlay(player, view)) {
         if (!player.isPrepared()) {
@@ -262,7 +265,7 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
       cachedStrategy = getStrategy();
       setStrategy(REST);
     } else {
-      // Don't allow to unrest if Toro has not been in rested state. Be careful.
+      // Don't allow to resume if Toro has not been in paused state. Be careful.
       if (getStrategy() != REST) {
         throw new IllegalStateException("Toro has already resumed.");
       }
@@ -468,6 +471,7 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
   /**
    * @hide
    */
+  @SuppressWarnings("WeakerAccess") //
   static boolean doAllowsToPlay(ToroPlayer player, ViewParent parent) {
     Rect windowRect = new Rect();
     Rect parentRect = new Rect();
@@ -489,8 +493,8 @@ public final class Toro implements Application.ActivityLifecycleCallbacks {
     videoRect.bottom += screenLoc[1] + videoView.getHeight();
 
     // Condition: window contains parent, and parent contains Video or parent intersects Video
-    return windowRect.contains(parentRect) && (parentRect.contains(videoRect)
-        || parentRect.intersect(videoRect));
+    return windowRect.contains(parentRect) && //
+        (parentRect.contains(videoRect) || parentRect.intersect(videoRect));
   }
 
   // Centralize Video state callbacks
